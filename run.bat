@@ -5,10 +5,16 @@ if not exist "target\campus-exam-scheduler.jar" (
   pause
   exit /b 1
 )
-where javaw >nul 2>nul
+where java >nul 2>nul
 if errorlevel 1 (
-  echo Java was not found. Install JDK or JRE 17 or newer from https://adoptium.net
+  echo Java was not found. Install JDK 17 or newer from https://adoptium.net
   pause
   exit /b 1
 )
-start "" javaw -jar "target\campus-exam-scheduler.jar"
+rem Started with "java" (not javaw) on purpose: if anything goes wrong the error stays visible in this window.
+java -jar "target\campus-exam-scheduler.jar"
+if errorlevel 1 (
+  echo.
+  echo The application stopped with an error. Read the message above.
+  pause
+)

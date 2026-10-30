@@ -18,6 +18,7 @@ public final class AppInit {
 
     public static void start(Path dbFile) {
         Db.configure(dbFile);
+        SchedulingService.forgetLastGeneration();      // never show results of another database
         Db.createSchema();
         Db.inTransaction(c -> {
             if (AdminDao.count(c) == 0) {

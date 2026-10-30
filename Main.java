@@ -8,11 +8,27 @@ import com.campus.examscheduler.ui.Theme;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-/** Application entry point. */
+/**
+ * Application entry point.
+ * <ul>
+ *   <li>no argument: start the desktop application</li>
+ *   <li>{@code --selftest}: headless end-to-end check against a temporary database (used by build.bat)</li>
+ *   <li>{@code --version}: print the version and exit</li>
+ * </ul>
+ */
 public final class Main {
     private Main() { }
 
     public static void main(String[] args) {
+        if (args.length > 0 && "--version".equals(args[0])) {
+            System.out.println(AppConfig.APP_NAME + " " + AppConfig.APP_VERSION);
+            return;
+        }
+        if (args.length > 0 && "--selftest".equals(args[0])) {
+            System.setProperty("java.awt.headless", "true");
+            System.exit(SelfTest.run());
+            return;
+        }
         Theme.install();
         SwingUtilities.invokeLater(() -> {
             try {

@@ -53,6 +53,21 @@ if not exist "target\campus-exam-scheduler.jar" (
   exit /b 1
 )
 
+rem ---- 4. Prove that the packaged JAR really starts: Main class found, manifest correct, SQLite bundled
+echo.
+echo Checking the packaged JAR ...
+java -jar "target\campus-exam-scheduler.jar" --version
+if errorlevel 1 (
+  echo [ERROR] The JAR cannot start its main class. The build is NOT usable.
+  echo         Check that src\main\java\com\campus\examscheduler\Main.java exists in this folder.
+  exit /b 1
+)
+java -jar "target\campus-exam-scheduler.jar" --selftest
+if errorlevel 1 (
+  echo [ERROR] The self-test of the packaged application FAILED. See the FAIL lines above.
+  exit /b 1
+)
+
 echo.
 echo ==========================================================
 echo  BUILD SUCCESSFUL

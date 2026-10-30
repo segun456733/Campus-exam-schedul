@@ -4,14 +4,29 @@ Offline Windows desktop application (Java 17+, Swing, SQLite, Maven) that automa
 10 science departments (ND1 and ND2), manages venues and settings, lets the administrator edit and validate changes, and exports/prints reports.
 **No internet, web server or cloud service is needed to run it.**
 
-## 1. Quick start
-1. Install **JDK 17 or newer** (e.g. Eclipse Temurin from https://adoptium.net) and **Apache Maven 3.9+** (https://maven.apache.org/download.cgi), add both to `PATH`.
-2. Open this folder and double-click **`build.bat`** (or run it in a command window).
-   - It checks Java and Maven, compiles, **runs all tests**, stops on any failure, and creates `target\campus-exam-scheduler.jar`.
-   - **The FIRST build needs internet** so Maven can download SQLite JDBC, JUnit and plugins (once). Afterwards `build.bat offline` works without internet.
-   - `build.bat skiptests` skips the tests (not recommended for submission).
-3. Start the app with **`run.bat`** or `java -jar target\campus-exam-scheduler.jar`.
-   The JAR contains SQLite JDBC, runs offline and does **not** need Maven on the target computer.
+## 1. Quick start (first-time user, Windows 10/11)
+**Prerequisites** (install once):
+1. **JDK 17 or newer** (a JDK, not only a JRE) - e.g. Eclipse Temurin 17 or 21 from https://adoptium.net. Tick "Add to PATH" / "Set JAVA_HOME" in the installer.
+2. **Apache Maven 3.9+** - download the *Binary zip archive* from https://maven.apache.org/download.cgi, unzip to `C:\Tools\apache-maven-3.9.9`, add `C:\Tools\apache-maven-3.9.9\bin` to PATH.
+3. Internet for the **first build only** (Maven downloads SQLite JDBC, JUnit and plugins once). After that the application and `build.bat offline` need no internet.
+
+**Build and start**
+1. Extract the ZIP to a normal folder, e.g. `C:\CampusExamScheduler` (avoid OneDrive/Desktop-synced folders and folders needing admin rights).
+2. Double-click **`build.bat`**. It checks Java and Maven, compiles, **runs all JUnit tests**, packages `target\campus-exam-scheduler.jar`, and then
+   **starts the packaged JAR twice to prove it works**: `--version` (the main class is inside the JAR and the manifest is right) and `--selftest`
+   (a headless end-to-end run on real SQLite: login, CRUD, scheduling, clashes, exports, persistence). If any step fails the script stops with `[ERROR]`.
+3. Double-click **`run.bat`** (or `java -jar target\campus-exam-scheduler.jar`) to open the application. Log in with the account in section 2.
+   (`build.bat skiptests` skips the unit tests - not recommended. `build.bat offline` builds without internet once dependencies are cached.)
+
+### Troubleshooting
+| Message | Cause and fix |
+|---|---|
+| `Could not find or load main class com.campus.examscheduler.Main` / `ClassNotFoundException` | The JAR does not contain `Main.class`. This happens when `src\main\java\com\campus\examscheduler\Main.java` is missing from the project folder (Maven still reports BUILD SUCCESS because no other class needs it). `build.bat` now detects this: it runs `java -jar ... --version` and stops with an error, and the test `MainClassPackagingTest` fails the build. Re-extract the ZIP and make sure the folder `src` is complete. |
+| `'mvn' is not recognized` | Maven is not on PATH - see prerequisites, then open a NEW command window. |
+| `Java ... is too old` / `release version 17 not supported` | Install JDK 17+ and make sure `java -version` shows 17 or higher. |
+| `Could not resolve dependencies` / `Connection refused` | First build needs internet (Maven Central). Check proxy/firewall. |
+| `The SQLite driver is missing from the JAR` (self-test) | The shaded JAR was not built; run `mvn clean package` and read the first error. |
+| Window does not appear | Run `run.bat` from a command window and read the error text; the database folder is `%APPDATA%\CampusExamScheduler`. |
 
 ## 2. Login
 | Username | Password |
@@ -53,6 +68,7 @@ To reset everything, close the app and delete that file. To restore only the sam
 See `docs/VERIFICATION.md` for exactly which of these were already executed and which you must run yourself.
 
 ## 6. Windows EXE (optional)
+Run `build.bat` first.
 `package-exe.bat` creates `dist\CampusExamScheduler\CampusExamScheduler.exe` (with bundled Java runtime) using `jpackage`.
 `package-exe.bat installer` makes an installer and needs the free WiX Toolset 3.x. Run `build.bat` first.
 

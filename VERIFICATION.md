@@ -1,25 +1,31 @@
-# What was verified, and what was not
+# What was verified, and what was not (honest status)
 
-The project was written in a sandbox with **JDK 21, no Maven, no internet and no display**. Be aware of exactly what that means.
+The project was built in a sandbox with **JDK 21, no Maven, no internet, no SQLite JDBC jar, no real JUnit jar and a headless JDK (no windows)**.
+Because of that, **`mvn clean verify` was never run by the author of this package.** `build.bat` does it on your laptop.
 
-## Actually executed and passed (in the sandbox)
+## Actually executed here and passed
 | Check | How |
 |---|---|
-| All main + test sources compile with no errors | `javac` (JDK 21, `--release` semantics of JDK 17 code) |
-| 34 automated tests pass: scheduler rules 1-11, 13, 14, 16, generator behaviour, demo data schedules completely (57 events, all constraints), field validation, password hashing, CSV and PDF output | Run with a minimal local stand-in for JUnit 5 (annotations `@Test`/`@BeforeEach` and the assertions used). **They have not yet been run by real JUnit/Maven - `build.bat` does that on your laptop.** |
-| `schema.sql` is valid SQLite and all 50 SQL statements in the Java code prepare correctly against it | Python `sqlite3` (SQLite 3.45) with `EXPLAIN` |
-| The PDF writer creates a valid multi-page A4 landscape PDF | opened with `pdftotext` and `pypdf` |
-| All 9 screens construct and paint without exceptions | headless Swing smoke test (no real window) |
+| All main + test sources compile (JDK 21 compiler); every `package` line matches its folder (0 mismatches) | `javac` + script |
+| 36 tests pass: scheduler rules, generator behaviour, demo data schedules completely (57 events), field validation, password hashing, CSV, PDF, main-class packaging | executed with a **minimal local stand-in for JUnit 5** (not the real engine) |
+| `schema.sql` is valid SQLite and all 50 SQL statements prepare against it | Python `sqlite3` (SQLite 3.45) `EXPLAIN` |
+| PDF writer output is a valid multi-page PDF | `pdftotext`, `pypdf` |
+| All 9 screens construct and paint without exceptions | headless Swing smoke test (no real window); two layout bugs found and fixed |
+| A hand-built JAR with `Main-Class: com.campus.examscheduler.Main` starts: `--version` works, `--selftest` correctly reports the missing SQLite driver | `java -jar` |
 
-## NOT verified - please check on your laptop (marked unverified)
-| Item | Why | What to do |
-|---|---|---|
-| Maven build, `pom.xml`, shaded runnable JAR, dependency download | no Maven / internet here | run `build.bat` |
-| SQLite JDBC at runtime (all DAO code against a real driver) | driver jar unavailable | `DatabaseIntegrationTest` (9 tests) runs during `build.bat`; they cover requirement 15 (persistence after restart), duplicates, manual-move rejection |
-| Interactive behaviour of the Swing UI (clicks, dialogs, login flow, SwingWorker progress) | no display | follow `docs/DEMO_GUIDE.md` once |
-| Printing | no printer / display | Reports > Print (use *Microsoft Print to PDF*) |
-| `jpackage` EXE | not on Windows | optional: `package-exe.bat` |
-| Visual match to the Dribbble reference | the link could not be opened | design follows the brief: navy sidebar, light workspace, blue accents |
+## NOT verified here (needs your laptop)
+| Item | Where it is checked for you |
+|---|---|
+| Maven build, shade plugin, dependency download, **real JUnit 5 run** | `build.bat` (`mvn clean package` runs surefire) |
+| Everything touching SQLite JDBC (all DAO code at runtime) | `DatabaseIntegrationTest` (9 tests) and `--selftest` (13 checks), both run by `build.bat` |
+| That the shaded JAR contains `Main.class` and the SQLite driver | `build.bat` runs `java -jar ... --version` and `--selftest` and stops on failure |
+| Interactive UI: clicks, dialogs, login flow, SwingWorker progress, resizing, printing | `docs/QA_CHECKLIST.md` (manual) |
+| `jpackage` EXE | `package-exe.bat` (Windows only) |
+| The Dribbble reference design | the link could not be opened; look follows the brief |
 
-If `build.bat` reports a failure, the error text tells exactly which test or file; most likely causes are a typo-level compile error
-in a UI class or a failing integration test - send the message and it can be fixed quickly.
+## About the "Could not find or load main class" error
+A BUILD SUCCESS followed by `ClassNotFoundException: com.campus.examscheduler.Main` means the finished JAR has no `Main.class`, i.e. `Main.java`
+was not part of the compiled sources (missing from `src\main\java\com\campus\examscheduler\`). Maven cannot notice this because no other class
+refers to `Main`. The cause in your earlier copy could not be inspected (no project ZIP reached the sandbox; only individual files, and `Main.java`
+was not among them). Protections now in place: test `MainClassPackagingTest` (fails the build), `build.bat` runs the JAR before declaring success,
+and `run.bat` keeps errors visible. The ZIP delivered with this report contains `Main.java` (verified).
